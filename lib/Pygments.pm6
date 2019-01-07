@@ -4,8 +4,9 @@ unit class Pygments:ver<0.0.1>;
 use Inline::Python;
 
 my Inline::Python $py;
+method !ip {
+    return $py if $py.defined;
 
-INIT {
     $py .= new;
     $py.run: q:to/SETUP/;
     from pygments import highlight
@@ -15,10 +16,12 @@ INIT {
     SETUP
 
     $py.run: %?RESOURCES<perl.py>.slurp;
+
+    $py
 }
 
 method call($name, |c) {
-    $py.call('__main__', $name, |c)
+    self!ip.call('__main__', $name, |c)
 }
 
 method highlight(Str $code, $lexer = Any, :$formatter = 'html', *%options) is export {
@@ -29,7 +32,7 @@ method highlight(Str $code, $lexer = Any, :$formatter = 'html', *%options) is ex
     };
 
     my $f = $.formatter($formatter, |%options);
-    $py.call('pygments', 'highlight', $code, $l, $f)
+    self!ip.call('pygments', 'highlight', $code, $l, $f)
 }
 
 method formatter($name, *%options) is export {
@@ -37,11 +40,11 @@ method formatter($name, *%options) is export {
 }
 
 method style(Str $name = 'default') {
-    $py.call('pygments.styles', 'get_style_by_name', $name)
+    self!ip.call('pygments.styles', 'get_style_by_name', $name)
 }
 
 method styles {
-    $py.run('list(STYLE_MAP.keys())', :eval).map: *.decode
+    self!ip.run('list(STYLE_MAP.keys())', :eval).map: *.decode
 }
 
 =begin pod
@@ -49,8 +52,9 @@ method styles {
 =head1 NAME
 
 Pygments - Wrapper to python pygments library.
-
 =head1 SYNOPSIS
+
+Printing some code with a terminal formatter.
 
   use Pygments;
 
@@ -68,18 +72,27 @@ Pygments - Wrapper to python pygments library.
   # OUTPUT: ｢I love Rust｣ love => ｢love｣ lang => ｢Rust｣
   ENDCODE
 
-  # Get a theme.
-  my $css = Pygments.css('manni');
-
   # Format a full html with line numbers and theme `manni`
-  my $formatted-code = Pygments.highlight(
-      $code, "perl6",
-      :linenos(True),
-      :style($css),
-      :full(True)
-  );
+  Pygments.highlight(
+      $code, "perl6", :formatter<terminal>,
+      :linenos(True)
+  ).say;
 
-  say $formatted-code;
+Also it can be used with C<Pod::To::HTML>:
+
+  use Pygments;
+
+  # Set the pod code callback to use pygments before *use* it
+  my %*POD2HTML-CALLBACKS;
+  %*POD2HTML-CALLBACKS<code> = sub (:$node, :&default) {
+      Pygments.highlight($node.contents.join('\n'), "perl6",
+                         :style(Pygments.style('emacs')),
+                         :full)
+  };
+  use Pod::To::HTML;
+  use Pod::Load;
+
+  pod2html(load('some.pod6'.IO)).say
 
 =head1 DESCRIPTION
 
@@ -121,5 +134,4 @@ Matias Linares <matiaslina@gmail.com>
 Copyright 2019 Matias Linares
 
 This library is free software; you can redistribute it and/or modify it under the Artistic License 2.0.
-
 =end pod
