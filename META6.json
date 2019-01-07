@@ -16,7 +16,7 @@
   "resources" : [
     "perl.py"
   ],
-  "source-url" : "",
+  "source-url" : "https://github.com/matiaslina/perl6-pygments",
   "tags" : [ ],
   "test-depends" : [ ],
   "version" : "0.0.1"
