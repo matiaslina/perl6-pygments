@@ -24,7 +24,7 @@ Printing some code with a terminal formatter.
     # OUTPUT: ｢I love Rust｣ love => ｢love｣ lang => ｢Rust｣
     ENDCODE
 
-    # Format a full html with line numbers and theme `manni`
+    # Output to terminal with line numbers.
     Pygments.highlight(
         $code, "perl6", :formatter<terminal>,
         :linenos(True)

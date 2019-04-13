@@ -4,6 +4,7 @@ unit class Pygments:ver<0.0.1>;
 use Inline::Python;
 
 my Inline::Python $py;
+
 method !ip {
     return $py if $py.defined;
 
@@ -21,7 +22,7 @@ method !ip {
 }
 
 method call($name, |c) {
-    self!ip.call('__main__', $name, |c)
+    self!ip().call('__main__', $name, |c)
 }
 
 method highlight(Str $code, $lexer = Any, :$formatter = 'html', *%options) is export {
@@ -32,7 +33,7 @@ method highlight(Str $code, $lexer = Any, :$formatter = 'html', *%options) is ex
     };
 
     my $f = $.formatter($formatter, |%options);
-    self!ip.call('pygments', 'highlight', $code, $l, $f)
+    self!ip().call('pygments', 'highlight', $code, $l, $f)
 }
 
 method formatter($name, *%options) is export {
@@ -40,11 +41,11 @@ method formatter($name, *%options) is export {
 }
 
 method style(Str $name = 'default') {
-    self!ip.call('pygments.styles', 'get_style_by_name', $name)
+    self!ip().call('pygments.styles', 'get_style_by_name', $name)
 }
 
 method styles {
-    self!ip.run('list(STYLE_MAP.keys())', :eval).map: *.decode
+    self!ip().run('list(STYLE_MAP.keys())', :eval).map: *.decode
 }
 
 =begin pod
@@ -72,7 +73,7 @@ Printing some code with a terminal formatter.
   # OUTPUT: ｢I love Rust｣ love => ｢love｣ lang => ｢Rust｣
   ENDCODE
 
-  # Format a full html with line numbers and theme `manni`
+  # Output to terminal with line numbers.
   Pygments.highlight(
       $code, "perl6", :formatter<terminal>,
       :linenos(True)
